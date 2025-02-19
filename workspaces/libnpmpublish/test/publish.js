@@ -1,7 +1,7 @@
 'use strict'
 
-const crypto = require('crypto')
-const fs = require('fs')
+const crypto = require('node:crypto')
+const fs = require('node:fs')
 const npa = require('npm-package-arg')
 const ssri = require('ssri')
 const t = require('tap')
@@ -345,7 +345,7 @@ t.test('publish existing package with provenance in gha', async t => {
   const workflowPath = '.github/workflows/publish.yml'
   const repository = 'github/foo'
   const serverUrl = 'https://github.com'
-  const ref = 'refs/heads/main'
+  const ref = 'refs/tags/pkg@1.0.0'
   const sha = 'deadbeef'
   const runID = '123456'
   const runAttempt = '1'
@@ -385,7 +385,7 @@ t.test('publish existing package with provenance in gha', async t => {
   const log = []
   const { publish } = t.mock('..', {
     'ci-info': t.mock('ci-info'),
-    'proc-log': { notice: (...msg) => log.push(['notice', ...msg]) },
+    'proc-log': { log: { notice: (...msg) => log.push(['notice', ...msg]) } },
   })
   const registry = new MockRegistry({
     tap: t,
@@ -486,7 +486,7 @@ t.test('publish existing package with provenance in gha', async t => {
         // Can't match length because in github actions certain environment
         // variables are present that are not present when running locally,
         // changing the payload size.
-        content_type: 'application/vnd.dev.sigstore.bundle+json;version=0.2',
+        content_type: 'application/vnd.dev.sigstore.bundle.v0.3+json',
       },
     },
   }
@@ -529,6 +529,9 @@ t.test('publish existing package with provenance in gha', async t => {
     t.hasStrict(provenance.predicate.buildDefinition.buildType,
       'https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1',
       'buildType matches expectations')
+    t.hasStrict(provenance.predicate.buildDefinition.externalParameters.workflow.ref,
+      'refs/tags/pkg@1.0.0',
+      'workflowRef matches expectations')
     t.hasStrict(provenance.predicate.runDetails.builder.id,
       `https://github.com/actions/runner/${runnerEnv}`,
       'builder id matches expectations')
@@ -941,7 +944,7 @@ t.test('publish existing package with provenance in gitlab', async t => {
   const log = []
   const { publish } = t.mock('..', {
     'ci-info': t.mock('ci-info'),
-    'proc-log': { notice: (...msg) => log.push(['notice', ...msg]) },
+    'proc-log': { log: { notice: (...msg) => log.push(['notice', ...msg]) } },
   })
   const registry = new MockRegistry({
     tap: t,
@@ -1035,7 +1038,7 @@ t.test('publish existing package with provenance in gitlab', async t => {
         // Can't match length because in github actions certain environment
         // variables are present that are not present when running locally,
         // changing the payload size.
-        content_type: 'application/vnd.dev.sigstore.bundle+json;version=0.2',
+        content_type: 'application/vnd.dev.sigstore.bundle.v0.3+json',
       },
     },
   }
